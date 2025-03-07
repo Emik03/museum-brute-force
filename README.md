@@ -15,9 +15,9 @@ Standard output will only contain the answer, and standard error will indicate p
 
 ## Usage
 
-- The main program is to brute force the best possible answer, you are intended to edit the `ANSWER`.
-  - The first array represents the initial amount of BP/Gold that each user has. This array must be **EXACTLY** 9 elements long to compile successfully.
-  - The second array represents the target. If the lengths are not equal, the users to the rightmost are tested for maximization. This array must be 9 or fewer elements long to compile successfully.
+- The main program is to brute force the best possible answer, you are intended to edit the `puzzle.txt`.
+  - The first line represents all the initial amount of BP/Gold that each user has, comma-separated. This must be **EXACTLY** 9 elements long to compile successfully.
+  - The second line represents the target. If less than 9 elements are specified, the users to the rightmost are tested for maximization.
 - Tests exist to validate an answer, you are intended to additionally edit the `vaults` declaration and assertion.
 
 While editing source is inconvenient, this program is specifically designed for performance first, ease-of-use second.
@@ -33,7 +33,7 @@ cargo run --release
 ```
 
 You may also compile the program in `VERBOSE` mode which logs every time a thread finds a new best answer for its specific task.
-The environment variable is checked at compile-time, not at runtime.
+The environment variable is checked at compile-time, not at runtime, hence the command:
 ```sh
 VERBOSE=1 cargo run --release
 ```

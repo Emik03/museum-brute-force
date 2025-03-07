@@ -4,6 +4,9 @@ authors = ["emik"]
 version = "1.0.0"
 edition = "2021"
 
+[dependencies]
+konst = {version = "0.3.16", features = ["parsing"]}
+
 [lints.clippy]
 nursery = "deny"
 pedantic = "deny"
