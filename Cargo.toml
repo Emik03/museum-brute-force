@@ -1,0 +1,21 @@
+[package]
+name = "museum-brute-force"
+authors = ["emik"]
+version = "1.0.0"
+edition = "2021"
+
+[lints.clippy]
+nursery = "deny"
+pedantic = "deny"
+unwrap_used = "deny"
+enum_glob_use = "deny"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[profile.release]
+lto = true
+opt-level = 3
+panic = 'abort'
+strip = "symbols"
+codegen-units = 1
