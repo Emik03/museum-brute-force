@@ -32,12 +32,13 @@ Be sure to compile the program in release mode, as without optimizations, this p
 cargo run --release
 ```
 
-You may also run the program in `VERBOSE` mode which logs every time a thread finds a new best answer for its specific task.
+You may also compile the program in `VERBOSE` mode which logs every time a thread finds a new best answer for its specific task.
+The environment variable is checked at compile-time, not at runtime.
 ```sh
-cargo run --release VERBOSE=1
+VERBOSE=1 cargo run --release
 ```
 
-Bare in mind, for huge computations the program will not output anything for a while, as the array is cycled from the right.
+Bear in mind, for huge computations the program will not output anything for a while, as the array is cycled from the right.
 This means that it assumes that users to the left that have some target will all submit 0, while the users to the right permute.
 
 ## Refactor

@@ -31,6 +31,14 @@ impl Display for Vault {
 impl Vault {
     pub(crate) const ALL: [Self; 3] = [Self::Bronze, Self::Silver, Self::Gold];
 
+    pub(crate) const fn factor(self) -> f32 {
+        match self {
+            Self::Bronze => 1.4,
+            Self::Silver => 1.7,
+            Self::Gold => 2.0,
+        }
+    }
+
     pub(crate) fn run_all(
         initial_vaults: [Self; 3],
         thread_id: Submission,
@@ -38,7 +46,6 @@ impl Vault {
         let mut max_sum = Submission::MIN;
         let mut max_product = Submission::MIN;
         let mut best_vaults: Vaults = Default::default();
-        let verbose = std::env::var_os("VERBOSE").is_some();
         let mut best_submissions: Submissions = Default::default();
 
         Self::do_loop(initial_vaults, |vaults| {
@@ -52,7 +59,7 @@ impl Vault {
                     best_vaults = vaults;
                     best_submissions = submissions;
 
-                    if verbose {
+                    if option_env!("VERBOSE").is_some() {
                         eprintln!("Thread {thread_id}: Found {submissions:?} from {vaults:?}");
                     }
                 }
@@ -90,6 +97,52 @@ impl Vault {
             })
     }
 
+    pub(crate) fn add_amount_to_vault(
+        self,
+        amount: Submission,
+        bronze_amount: &mut Submission,
+        silver_amount: &mut Submission,
+        gold_amount: &mut Submission,
+    ) {
+        match self {
+            Self::Bronze => bronze_amount,
+            Self::Silver => silver_amount,
+            Self::Gold => gold_amount,
+        }
+        .add_assign(amount);
+    }
+
+    pub(crate) fn should_prune<const T: usize>(vaults: [Self; T]) -> bool {
+        if option_env!("NO_PRUNING").is_some() {
+            return false;
+        }
+
+        let mut max_bronze = Submission::default();
+        let mut max_silver = Submission::default();
+        let mut max_gold = Submission::default();
+        let mut bronze = Submission::default();
+        let mut silver = Submission::default();
+        let mut gold = Submission::default();
+
+        vaults.iter().zip(PUZZLE.0).for_each(|(v, s)| {
+            v.add_amount_to_vault(s, &mut max_bronze, &mut max_silver, &mut max_gold);
+        });
+
+        PUZZLE.0[vaults.len()..].iter().for_each(|v| {
+            max_bronze += v;
+            max_silver += v;
+            max_gold += v;
+        });
+
+        vaults.iter().zip(PUZZLE.1).for_each(|(v, s)| {
+            v.add_amount_to_vault(s, &mut bronze, &mut silver, &mut gold);
+        });
+
+        f32::from(max_bronze) * Self::Bronze.factor() < f32::from(bronze)
+            || f32::from(max_silver) * Self::Silver.factor() < f32::from(silver)
+            || f32::from(max_gold) * Self::Gold.factor() < f32::from(gold)
+    }
+
     fn add_to_vault<'a>(
         self,
         amount: Submission,
@@ -116,9 +169,13 @@ impl Vault {
     ) {
         #[allow(clippy::cast_possible_truncation)]
         amount.sub_assign(match self {
-            Self::Bronze => f32::from(**bronze_amount) * 1.4 / f32::from(**bronze_count),
-            Self::Silver => f32::from(**silver_amount) * 1.7 / f32::from(**silver_count),
-            Self::Gold => f32::from(**gold_amount) * 2.0 / f32::from(**gold_count),
+            Self::Bronze => {
+                f32::from(**bronze_amount) * Self::Bronze.factor() / f32::from(**bronze_count)
+            }
+            Self::Silver => {
+                f32::from(**silver_amount) * Self::Silver.factor() / f32::from(**silver_count)
+            }
+            Self::Gold => f32::from(**gold_amount) * Self::Gold.factor() / f32::from(**gold_count),
         } as Submission);
     }
 
@@ -127,11 +184,31 @@ impl Vault {
         T: FnMut(Vaults),
     {
         for v3 in Self::ALL {
+            if Self::should_prune([v0, v1, v2, v3]) {
+                continue;
+            }
             for v4 in Self::ALL {
+                if Self::should_prune([v0, v1, v2, v3, v4]) {
+                    continue;
+                }
                 for v5 in Self::ALL {
+                    if Self::should_prune([v0, v1, v2, v3, v4, v5]) {
+                        continue;
+                    }
                     for v6 in Self::ALL {
+                        if Self::should_prune([v0, v1, v2, v3, v4, v5, v6]) {
+                            continue;
+                        }
                         for v7 in Self::ALL {
+                            if Self::should_prune([v0, v1, v2, v3, v4, v5, v6, v7]) {
+                                continue;
+                            }
+
                             for v8 in Self::ALL {
+                                if Self::should_prune([v0, v1, v2, v3, v4, v5, v6, v7, v8]) {
+                                    continue;
+                                }
+
                                 for s0 in 0..=PUZZLE.0[0] {
                                     for s1 in 0..=PUZZLE.0[1] {
                                         for s2 in 0..=PUZZLE.0[2] {
