@@ -1,6 +1,8 @@
 use crate::PUZZLE;
 use std::fmt::{Display, Formatter};
 use std::ops::{AddAssign, SubAssign};
+use std::thread;
+use std::thread::JoinHandle;
 
 pub type Submission = i16;
 
@@ -37,6 +39,32 @@ impl Vault {
             Self::Silver => 1.7,
             Self::Gold => 2.0,
         }
+    }
+
+    pub(crate) fn run_threads() -> Vec<JoinHandle<(Vaults, Submissions)>> {
+        let mut thread_id = 1;
+        let mut threads = vec![];
+
+        for v0 in Self::ALL {
+            if Self::should_prune([v0]) {
+                continue;
+            }
+            for v1 in Self::ALL {
+                if Self::should_prune([v0, v1]) {
+                    continue;
+                }
+                for v2 in Self::ALL {
+                    if Self::should_prune([v0, v1, v2]) {
+                        continue;
+                    }
+                    let slice = [v0, v1, v2];
+                    thread_id += 1;
+                    threads.push(thread::spawn(move || Self::run_all(slice, thread_id)));
+                }
+            }
+        }
+
+        threads
     }
 
     pub(crate) fn run_all(
